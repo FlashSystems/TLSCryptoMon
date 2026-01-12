@@ -1,0 +1,25 @@
+[package]
+name = "tlscryptomon"
+version = "0.1.0"
+authors = ["Daniel Goß <developer@flashsystems.de>"]
+edition = "2021"
+license = "MIT OR GPL-2.0"
+rust-version = "1.80"
+
+[dependencies]
+libbpf-rs = "0.25"
+libc = "0.2"
+byteorder = "1.5"
+ctrlc = "3.4"
+thiserror = "2.0"
+clap = { version = "4.5", features = ["derive"] }
+log = "0.4"
+simple_logger = { version = "5", features = ["stderr"] }
+time = { version = "^0.3.44", features = ["formatting", "local-offset", "macros"] }
+
+[build-dependencies]
+libbpf-cargo = "0.25"
+
+[profile.release]
+lto = true
+codegen-units = 1
