@@ -136,6 +136,9 @@ fn run(config: cmdline::Config) -> Result<(), RuntimeError> {
 	debug!("Reserve {} slots for ports in 'in_ports' map.", config.ports.len());
 	open_skel.maps.in_ports.set_max_entries(config.ports.len() as u32)?;
 
+	// Show the size of the output ring buffer.
+	debug!("Output ring buffer size is {} kBytes.", open_skel.maps.output.max_entries() / 1024);
+
 	// Initialize the in_const_debug variable to enable or disable ebpf debugging.
 	if let Some(ref mut bss_data) = open_skel.maps.bss_data {
 		bss_data.in_const_debug = if config.debug_ebpf {

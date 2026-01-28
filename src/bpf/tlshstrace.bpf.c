@@ -35,6 +35,11 @@ static const u8 EXT_KEY_SHARE = 51;
 static u64 ringbuffer_full_counter = 0;
 static u64 invalid_packet_counter = 0;
 
+// Configuration of the output ringbuffer. The PAGE_SIZE must match the
+// operating system page size and must be a power of 2.
+#define PAGE_SIZE 4096
+#define OUTPUT_QUEUE_LENGTH 512
+
 // Simple macro to easily copy an IPv6 address in a way that
 // makes the eBPF verifier happy.
 #define COPY_IPV6(dst, src) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = src[3]; }
@@ -98,7 +103,7 @@ struct {
 
 // Output structure
 typedef struct {
-	u32 address_family;	
+	u32 address_family;
 	u32 remote_address[4];
 	u32 local_address[4];
 	u16 remote_port;
@@ -110,9 +115,12 @@ typedef struct {
 } __attribute__ ((packed)) output_record_t;
 
 // Output ringbuffer
+// The size of the ringbuffer power of two and a multiple of the OS page size
+// The formulare calculates a value based on the minimum number of slots the
+// ringbuffer must have.
 struct {
 	__uint(type, BPF_MAP_TYPE_RINGBUF);
-	__uint(max_entries, 128 * 1024 /* 128 KB */);
+	__uint(max_entries, (((sizeof(output_record_t) * OUTPUT_QUEUE_LENGTH) / PAGE_SIZE) + 1) * PAGE_SIZE);
 } output SEC(".maps");
 
 // Structure of a TLS record header
