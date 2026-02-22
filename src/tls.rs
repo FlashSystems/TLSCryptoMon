@@ -1,6 +1,29 @@
 // SPDX-License-Identifier: BSD-3-Clause
 use std::{collections::HashMap, sync::LazyLock};
 
+/// Implements an algorithm name with an optional static name.
+/// If the name is none, the algorithm id will be used as a default string.
+pub struct AlgoName {
+    name: Option<&'static str>,
+    id: u16
+}
+
+impl AlgoName {
+    fn new(name: Option<&'static str>, id: u16) -> Self {
+        Self { name, id }
+    }
+}
+
+impl std::fmt::Display for AlgoName {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        if let Some(name) = self.name {
+            f.write_str(name)
+        } else {
+            write!(f, "unknown_0x{:04x}", self.id)
+        }
+    }
+}
+
 /// List of TLS ciphers and IDs
 static TLS_CIPHERS: LazyLock<HashMap<u16, &'static str>> = LazyLock::new(|| { HashMap::from([
     (0x0000, "TLS_NULL_WITH_NULL_NULL"),
@@ -349,79 +372,85 @@ static TLS_CIPHERS: LazyLock<HashMap<u16, &'static str>> = LazyLock::new(|| { Ha
 ]) });
 
 /// List of key exchange algorithms and IDs
-static TLS_KEX: LazyLock<HashMap<u16, &'static str>> = LazyLock::new(|| { HashMap::from([
-    (1, "sect163k1 (K-163)"),
-    (2, "sect163r1"),
-    (3, "sect163r2 (B-163)"),
-    (4, "sect193r1"),
-    (5, "sect193r2"),
-    (6, "sect233k1 (K-233)"),
-    (7, "sect233r1 (B-233)"),
-    (8, "sect239k1"),
-    (9, "sect283k1 (K-283)"),
-    (10, "sect283r1 (B-283)"),
-    (11, "sect409k1 (K-409)"),
-    (12, "sect409r1 (B-409)"),
-    (13, "sect571k1 (K-571)"),
-    (14, "sect571r1 (B-571)"),
-    (15, "secp160k1"),
-    (16, "secp160r1"),
-    (17, "secp160r2"),
-    (18, "secp192k1"),
-    (19, "secp192r1 (P-192)"),
-    (20, "secp224k1"),
-    (21, "secp224r1 (P-224)"),
-    (22, "secp256k1"),
-    (23, "secp256r1 (P-256)"),
-    (24, "secp384r1 (P-384)"),
-    (25, "secp521r1 (P-521)"),
-    (26, "brainpoolP256r1"),
-    (27, "brainpoolP384r1"),
-    (28, "brainpoolP512r1"),
-    (29, "ecdh_x25519"),
-    (30, "ecdh_x448"),
-    (31, "brainpoolP256r1tls13"),
-    (32, "brainpoolP384r1tls13"),
-    (33, "brainpoolP512r1tls13"),
-    (34, "GC256A"),
-    (35, "GC256B"),
-    (36, "GC256C"),
-    (37, "GC256D"),
-    (38, "GC512A"),
-    (39, "GC512B"),
-    (40, "GC512C"),
-    (256, "ffdhe2048"),
-    (257, "ffdhe3072"),
-    (258, "ffdhe4096"),
-    (259, "ffdhe6144"),
-    (260, "ffdhe8192"),
-    (512, "MLKEM512"),
-    (513, "MLKEM768"),
-    (514, "MLKEM1024"),
-    (4587, "SecP256r1MLKEM768"),
-    (4588, "X25519MLKEM768"),
-    (4589, "SecP384r1MLKEM1024"),
-    (25497, "X25519Kyber768Draft00"),
-    (25498, "SecP256r1Kyber768Draft00"),
-    (0xFF01, "arbitrary_explicit_prime_curves"),
-    (0xFF02, "arbitrary_explicit_char2_curves")
+static TLS_KEX: LazyLock<HashMap<u16, (&'static str, bool)>> = LazyLock::new(|| { HashMap::from([
+    (1, ("sect163k1 (K-163)", false)),
+    (2, ("sect163r1", false)),
+    (3, ("sect163r2 (B-163)", false)),
+    (4, ("sect193r1", false)),
+    (5, ("sect193r2", false)),
+    (6, ("sect233k1 (K-233)", false)),
+    (7, ("sect233r1 (B-233)", false)),
+    (8, ("sect239k1", false)),
+    (9, ("sect283k1 (K-283)", false)),
+    (10, ("sect283r1 (B-283)", false)),
+    (11, ("sect409k1 (K-409)", false)),
+    (12, ("sect409r1 (B-409)", false)),
+    (13, ("sect571k1 (K-571)", false)),
+    (14, ("sect571r1 (B-571)", false)),
+    (15, ("secp160k1", false)),
+    (16, ("secp160r1", false)),
+    (17, ("secp160r2", false)),
+    (18, ("secp192k1", false)),
+    (19, ("secp192r1 (P-192)", false)),
+    (20, ("secp224k1", false)),
+    (21, ("secp224r1 (P-224)", false)),
+    (22, ("secp256k1", false)),
+    (23, ("secp256r1 (P-256)", false)),
+    (24, ("secp384r1 (P-384)", false)),
+    (25, ("secp521r1 (P-521)", false)),
+    (26, ("brainpoolP256r1", false)),
+    (27, ("brainpoolP384r1", false)),
+    (28, ("brainpoolP512r1", false)),
+    (29, ("ecdh_x25519", false)),
+    (30, ("ecdh_x448", false)),
+    (31, ("brainpoolP256r1tls13", false)),
+    (32, ("brainpoolP384r1tls13", false)),
+    (33, ("brainpoolP512r1tls13", false)),
+    (34, ("GC256A", false)),
+    (35, ("GC256B", false)),
+    (36, ("GC256C", false)),
+    (37, ("GC256D", false)),
+    (38, ("GC512A", false)),
+    (39, ("GC512B", false)),
+    (40, ("GC512C", false)),
+    (256, ("ffdhe2048", false)),
+    (257, ("ffdhe3072", false)),
+    (258, ("ffdhe4096", false)),
+    (259, ("ffdhe6144", false)),
+    (260, ("ffdhe8192", false)),
+    (512, ("MLKEM512", true)),
+    (513, ("MLKEM768", true)),
+    (514, ("MLKEM1024", true)),
+    (4587, ("SecP256r1MLKEM768", true)),
+    (4588, ("X25519MLKEM768", true)),
+    (4589, ("SecP384r1MLKEM1024", true)),
+    (25497, ("X25519Kyber768Draft00", true)),
+    (25498, ("SecP256r1Kyber768Draft00", true)),
+    (0xFF01, ("arbitrary_explicit_prime_curves", false)),
+    (0xFF02, ("arbitrary_explicit_char2_curves", false))
 ]) });
 
-/// Generic function to lookup a u16 key within a list and to return an
-/// unkown value, if the value is not found.
-fn lookup(map: &HashMap<u16, &'static str>, key: u16) -> String {
-    match map.get(&key) {
-		Some(name) => name.to_string(),
-		None => format!("unknown_0x{:04x}", key)
-	}
+pub struct KexInfo {
+    pub name: AlgoName,
+    pub pq: bool
 }
 
 /// Lookup the cipher suite name by ID
-pub fn get_cipher_suite_name(cipher_suite: u16) -> String {
-    lookup(&TLS_CIPHERS, cipher_suite)
+pub fn get_cipher_suite_name(cipher_suite: u16) -> AlgoName {
+    AlgoName::new(TLS_CIPHERS.get(&cipher_suite).copied(), cipher_suite)
 }
 
 /// Lookup key extension name by ID
-pub fn get_kex_name(kex: u16) -> String {
-    lookup(&TLS_KEX, kex)
+pub fn get_kex_info(kex: u16) -> KexInfo {
+    if let Some(ki) = TLS_KEX.get(&kex) {
+        KexInfo {
+            name: AlgoName::new(Some(ki.0), kex),
+            pq: ki.1
+        }
+    } else {
+        KexInfo {
+            name: AlgoName::new(None, kex),
+            pq: false
+        }
+    }
 }

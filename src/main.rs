@@ -53,24 +53,28 @@ fn bump_memlock_rlimit() -> Result<(), RuntimeError> {
 	}
 }
 
-fn process_tls_session(data: &[u8], ringbuffer_full_counter: &mut u64, invalid_packet_counter: &mut u64) {
+fn process_tls_session(non_pq_only: bool, data: &[u8], ringbuffer_full_counter: &mut u64, invalid_packet_counter: &mut u64) {
 	match EbpfOutput::try_from(data) {
 		Ok(output) => {
-			// Becaouse we're analysing the return package the remote_port and local_port are swaped.
-			// It would be confusing to output it this way, because the user would think of the
-			// connection originating from the client. Therefore we swap the remote_port and the
-			// local_port.
-			println!("{timestamp} {local_ip} {remote_port} {remote_ip} {local_port} {kex} {cipher}",
-				local_ip = output.local_address,
-				local_port = output.local_port,
-				remote_ip = output.remote_address,
-				remote_port = output.remote_port,
-				cipher = tls::get_cipher_suite_name(output.cipher_suite),
-				kex = tls::get_kex_name(output.named_group),
-				timestamp = OffsetDateTime::now_utc()
-				            .format(&TIMESTAMP_FORMAT)
-                            .unwrap() //FIXME
-			);
+			let kex_info = tls::get_kex_info(output.named_group);
+
+			if ! (non_pq_only && kex_info.pq) {
+				// Becaouse we're analysing the return package the remote_port and local_port are swaped.
+				// It would be confusing to output it this way, because the user would think of the
+				// connection originating from the client. Therefore we swap the remote_port and the
+				// local_port.
+				println!("{timestamp} {local_ip} {remote_port} {remote_ip} {local_port} {kex} {cipher}",
+					local_ip = output.local_address,
+					local_port = output.local_port,
+					remote_ip = output.remote_address,
+					remote_port = output.remote_port,
+					cipher = tls::get_cipher_suite_name(output.cipher_suite),
+					kex = kex_info.name,
+					timestamp = OffsetDateTime::now_utc()
+								.format(&TIMESTAMP_FORMAT)
+								.unwrap() //FIXME
+				);
+			}
 
 			if *ringbuffer_full_counter != output.ringbuffer_full_counter {
 				warn!("Warning: Ringbuffer got full. Missed {} events.", output.ringbuffer_full_counter - *ringbuffer_full_counter);
@@ -172,7 +176,8 @@ fn run(config: cmdline::Config) -> Result<(), RuntimeError> {
 	debug!("Attaching ringbuffer...");
     let mut output_buffer_builder = libbpf_rs::RingBufferBuilder::new();
 
-	output_buffer_builder.add(&skel.maps.output, move |data| { process_tls_session(data, &mut ringbuffer_full_counter, &mut invalid_packet_counter); 0 })?;
+	let non_pq_only = config.non_pq_only;
+	output_buffer_builder.add(&skel.maps.output, move |data| { process_tls_session(non_pq_only, data, &mut ringbuffer_full_counter, &mut invalid_packet_counter); 0 })?;
 	let output_buffer = output_buffer_builder.build()?;
 
 	// FIXME: What cgroup should we use?
