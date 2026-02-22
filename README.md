@@ -24,6 +24,7 @@ The only mandatory parameter is `-p` that specifies the port to monitor on the h
 | `-v` | Enables verbose output. This prints more information, but not as much information as the debug option. |
 | `-D` | Enables debug output on the eBPF program that is loaded into the kernel. Debug output can be retrieved via tracefs's `trace_pipe`. Normally the `trace_pipe` pipe is accessible via `/sys/kernel/tracing/trace_pipe`. |
 | `-c` | Monitor only processes belonging to this cgroup. Default: `/sys/fs/cgroup/` |
+| `-n` | Show only connections that are not using a quantum safe key exchange mechanism. |
 
 To monitor all HTTPs taffic on port 443 use:
 
