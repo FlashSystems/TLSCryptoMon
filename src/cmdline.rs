@@ -35,7 +35,11 @@ pub struct Config {
 
     /// Monitor only processes belonging to this cgroup.
     #[arg(short, long, default_value = "/sys/fs/cgroup/")]
-    pub cgroup: PathBuf
+    pub cgroup: PathBuf,
+
+    /// Output only connections using non post quantum key exchanges
+    #[arg(short = 'n', long)]
+    pub non_pq_only: bool
 }
 
 pub fn get_config() -> Result<Config, ConfigError>  {
