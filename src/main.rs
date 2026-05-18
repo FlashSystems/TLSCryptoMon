@@ -94,7 +94,7 @@ fn run(config: cmdline::Config) -> Result<(), RuntimeError> {
 		move |data| { process_tls_session(non_pq_only, data, &mut ringbuffer_full_counter, &mut invalid_packet_counter); Ebpf::CALLBACK_OK }
 	)?;
 
-	debug!("Attaching to cgroup {}...", config.cgroup.to_string_lossy());
+	debug!("Attaching to cgroup '{}'...", config.cgroup.to_string_lossy());
 	let cgroup = std::fs::File::open(config.cgroup).map_err(RuntimeError::CgroupOpen)?;
 	let monitored_cgroup = ebpf.attach_to_cgroup(cgroup)?;
 
