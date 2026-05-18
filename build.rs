@@ -27,6 +27,10 @@ fn main() {
     // Enable to treat warnings as error if we're building a relase build.
     if release_build {
         args.push(OsString::from("-Werror"));
+        
+        // The missing-declarations warning must be kept as a warning because `vmlinux.h/include/x86_64/vmlinux.h`
+        // generates this warning on `struct ns_tree`, `struct freelist_tid`, `union pipe_index` and `freelist_counters`.
+        args.push(OsString::from("-Wno-error=missing-declarations"));
     }
 
     // Run the compiler
