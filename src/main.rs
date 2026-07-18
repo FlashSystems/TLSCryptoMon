@@ -135,7 +135,7 @@ fn main() {
 			}
 		},
 		Err(error) => {
-			log::error!("Configuration error: {error}. Check command line.");
+			error!("Configuration error: {error}. Check command line.");
 		}
 	}
 }
