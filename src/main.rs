@@ -124,7 +124,6 @@ fn main() {
 			ebpf::init_logging(log_level);
 
 			// Initialize the logger with the configured log level.
-			// Use the systemd journal if it is avaiable
 			simple_logger::SimpleLogger::new()
 				.with_utc_timestamps()
 				.init().unwrap();
